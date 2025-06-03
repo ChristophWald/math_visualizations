@@ -1,2 +1,2 @@
-# Math-visualizations
-Visualizations for mathematical operations of signal processing and matrix operations
+# math visualizations
+The folder 'matrices' contains some visualization of basic matrices and transformations.
