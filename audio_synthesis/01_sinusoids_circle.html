@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sinusoids derived from circular movement</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 40px;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 800px;
+      height: 800px;
+    }
+    .canvas-row {
+      display: flex;
+    }
+    canvas {
+      border: 1px solid #ccc;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="canvas-wrapper">
+  <!-- First row: Circle + Sine -->
+  <div class="canvas-row">
+    <canvas id="circleCanvas" width="400" height="400"></canvas>
+    <canvas id="sineCanvas" width="400" height="400"></canvas>
+  </div>
+
+  <!-- Second row: Cosine -->
+  <div class="canvas-row">
+    <canvas id="cosineCanvas" width="400" height="400"></canvas>
+  </div>
+
+  <!-- Overlay canvases -->
+  <canvas id="lineCanvas" class="overlay" width="800" height="800" style="border: none;"></canvas>
+</div>
+
+<script>
+  const circleCanvas = document.getElementById('circleCanvas');
+  const circleCtx = circleCanvas.getContext('2d');
+
+  const sineCanvas = document.getElementById('sineCanvas');
+  const sineCtx = sineCanvas.getContext('2d');
+
+  const cosineCanvas = document.getElementById('cosineCanvas');
+  const cosineCtx = cosineCanvas.getContext('2d');
+
+  const lineCanvas = document.getElementById('lineCanvas');
+  const lineCtx = lineCanvas.getContext('2d');
+
+  const centerX = 200;
+  const centerY = 200;
+  const radius = 150;
+
+  let angle = 1;
+  let dragging = false;
+  let draggingSine = false;
+  let draggingCosine = false;
+
+  function drawCircle(angle) {
+    circleCtx.clearRect(0, 0, 400, 400);
+
+    // Circle
+    circleCtx.beginPath();
+    circleCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    circleCtx.strokeStyle = '#333';
+    circleCtx.lineWidth = 2;
+    circleCtx.stroke();
+
+    // Red dot
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY - radius * Math.sin(angle);
+    circleCtx.beginPath();
+    circleCtx.arc(x, y, 6, 0, Math.PI * 2);
+    circleCtx.fillStyle = 'red';
+    circleCtx.fill();
+  }
+
+  function drawSine(angle) {
+    sineCtx.clearRect(0, 0, 400, 400);
+
+    sineCtx.beginPath();
+    sineCtx.moveTo(0, centerY);
+    sineCtx.lineTo(400, centerY);
+    sineCtx.strokeStyle = '#aaa';
+    sineCtx.stroke();
+
+    const maxX = (angle / (2 * Math.PI)) * 400;
+    sineCtx.beginPath();
+    for (let i = 0; i <= maxX; i++) {
+      const t = (i / 400) * (2 * Math.PI);
+      const y = centerY - Math.sin(t) * radius;
+      if (i === 0) sineCtx.moveTo(i, y);
+      else sineCtx.lineTo(i, y);
+    }
+    sineCtx.strokeStyle = 'blue';
+    sineCtx.lineWidth = 2;
+    sineCtx.stroke();
+
+    const sineX = maxX;
+    const sineY = centerY - Math.sin(angle) * radius;
+    sineCtx.beginPath();
+    sineCtx.arc(sineX, sineY, 6, 0, Math.PI * 2);
+    sineCtx.fillStyle = 'red';
+    sineCtx.fill();
+  }
+
+  function drawCosine(angle) {
+    cosineCtx.clearRect(0, 0, 400, 400);
+
+    cosineCtx.beginPath();
+    cosineCtx.moveTo(centerX, 0);
+    cosineCtx.lineTo(centerX, 400);
+    cosineCtx.strokeStyle = '#aaa';
+    cosineCtx.stroke();
+
+    const maxY = (angle / (2 * Math.PI)) * 400;
+    cosineCtx.beginPath();
+    for (let i = 0; i <= maxY; i++) {
+      const t = (i / 400) * (2 * Math.PI);
+      const x = centerX + Math.cos(t) * radius;
+      const y = i;
+      if (i === 0) cosineCtx.moveTo(x, y);
+      else cosineCtx.lineTo(x, y);
+    }
+    cosineCtx.strokeStyle = 'green';
+    cosineCtx.lineWidth = 2;
+    cosineCtx.stroke();
+
+    const cosineX = centerX + Math.cos(angle) * radius;
+    const cosineY = maxY;
+    cosineCtx.beginPath();
+    cosineCtx.arc(cosineX, cosineY, 6, 0, Math.PI * 2);
+    cosineCtx.fillStyle = 'red';
+    cosineCtx.fill();
+  }
+
+  function drawConnectingLines(angle) {
+    lineCtx.clearRect(0, 0, 800, 800);
+
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY - radius * Math.sin(angle);
+
+    const sineX = 400 + (angle / (2 * Math.PI)) * 400;
+    const sineY = centerY - Math.sin(angle) * radius;
+
+    const cosineX = centerX + Math.cos(angle) * radius;
+    const cosineY = 400 + (angle / (2 * Math.PI)) * 400;
+
+    lineCtx.beginPath();
+    lineCtx.moveTo(x, y);
+    lineCtx.lineTo(sineX, sineY);
+    lineCtx.strokeStyle = 'blue';
+    lineCtx.lineWidth = 2;
+    lineCtx.stroke();
+
+    lineCtx.beginPath();
+    lineCtx.moveTo(x, y);
+    lineCtx.lineTo(cosineX, cosineY);
+    lineCtx.strokeStyle = 'green';
+    lineCtx.lineWidth = 2;
+    lineCtx.stroke();
+  }
+
+  function update() {
+    drawCircle(angle);
+    drawSine(angle);
+    drawCosine(angle);
+    drawConnectingLines(angle);
+  }
+
+  function updateAngleFromMouse(e) {
+    const rect = circleCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const dx = mouseX - centerX;
+    const dy = centerY - mouseY;
+    angle = Math.atan2(dy, dx);
+    if (angle < 0) angle += 2 * Math.PI;
+    update();
+  }
+
+  function updateSineAngleFromMouse(e) {
+    const rect = sineCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    angle = (mouseX / 400) * 2 * Math.PI;
+    angle = Math.max(0, Math.min(angle, 2 * Math.PI));
+    update();
+  }
+
+  function updateCosineAngleFromMouse(e) {
+    const rect = cosineCanvas.getBoundingClientRect();
+    const mouseY = e.clientY - rect.top;
+    angle = (mouseY / 400) * 2 * Math.PI;
+    angle = Math.max(0, Math.min(angle, 2 * Math.PI));
+    update();
+  }
+
+  function isNearSineDot(e) {
+    const rect = sineCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const dotX = (angle / (2 * Math.PI)) * 400;
+    const dotY = centerY - Math.sin(angle) * radius;
+    return Math.hypot(mouseX - dotX, mouseY - dotY) < 10;
+  }
+
+  function isNearCosineDot(e) {
+    const rect = cosineCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const dotX = centerX + Math.cos(angle) * radius;
+    const dotY = (angle / (2 * Math.PI)) * 400;
+    return Math.hypot(mouseX - dotX, mouseY - dotY) < 10;
+  }
+
+  // Mouse event listeners
+  circleCanvas.addEventListener('mousedown', (e) => {
+    dragging = true;
+    updateAngleFromMouse(e);
+  });
+
+  circleCanvas.addEventListener('mousemove', (e) => {
+    if (dragging) updateAngleFromMouse(e);
+  });
+
+  sineCanvas.addEventListener('mousedown', (e) => {
+    if (isNearSineDot(e)) {
+      draggingSine = true;
+      updateSineAngleFromMouse(e);
+    }
+  });
+
+  sineCanvas.addEventListener('mousemove', (e) => {
+    if (draggingSine) updateSineAngleFromMouse(e);
+  });
+
+  cosineCanvas.addEventListener('mousedown', (e) => {
+    if (isNearCosineDot(e)) {
+      draggingCosine = true;
+      updateCosineAngleFromMouse(e);
+    }
+  });
+
+  cosineCanvas.addEventListener('mousemove', (e) => {
+    if (draggingCosine) updateCosineAngleFromMouse(e);
+  });
+
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    draggingSine = false;
+    draggingCosine = false;
+  });
+
+  update();
+</script>
+
+</body>
+</html>
+
