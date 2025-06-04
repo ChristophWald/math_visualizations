@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dual Sine Waves with Phase Control</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  canvas {
+    border: 1px solid #ccc;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .canvas-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 30px;
+  }
+  .slider-container {
+    margin-left: 20px;
+    /* Center slider vertically relative to 200px canvas */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 200px;
+  }
+  label {
+    display: inline-block;
+    width: 80px;
+  }
+  input[type=range] {
+    width: 200px;
+    vertical-align: middle;
+  }
+  .value {
+    display: none;
+    width: 50px;
+    text-align: right;
+    margin-left: 10px;
+    font-family: monospace;
+  }
+  .preset-buttons {
+    margin-top: 10px;
+  }
+  button {
+    margin-right: 10px;
+    padding: 5px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  /* Container for operator signs */
+  .operator-row {
+    position: relative;
+    height: 0;
+    margin-bottom: 30px;
+  }
+  .operator {
+    position: absolute;
+    top: 50%;
+    left: 310px; /* ~half canvas width (600/2=300) + 10px offset */
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #333;
+    user-select: none;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- First sine wave canvas -->
+<canvas id="sineCanvas1" width="600" height="200"></canvas>
+
+<!-- Plus sign row -->
+<div class="operator-row">
+  <div class="operator">+</div>
+</div>
+
+<!-- Second sine wave canvas with phase slider and preset -->
+<div class="canvas-row">
+  <canvas id="sineCanvas2" width="600" height="200"></canvas>
+
+  <div class="slider-container">
+    <label for="phase2">Phase</label>
+    <input type="range" id="phase2" min="0" max="6.28319" step="0.01" value="0" />
+    <span class="value" id="phase2Val">0.00</span>
+
+    <div class="preset-buttons">
+      <button id="presetPi">π</button>
+    </div>
+  </div>
+</div>
+
+<!-- Equals sign row -->
+<div class="operator-row">
+  <div class="operator">=</div>
+</div>
+
+<!-- Sum canvas -->
+<canvas id="sineCanvasSum" width="600" height="200"></canvas>
+
+<script>
+  const canvas1 = document.getElementById('sineCanvas1');
+  const ctx1 = canvas1.getContext('2d');
+  const canvas2 = document.getElementById('sineCanvas2');
+  const ctx2 = canvas2.getContext('2d');
+  const canvasSum = document.getElementById('sineCanvasSum');
+  const ctxSum = canvasSum.getContext('2d');
+  const width = canvas1.width;
+  const height = canvas1.height;
+
+  const yMin = -2;
+  const yMax = 2;
+  const xMin = -2;
+  const xMax = 2;
+
+  const phase2Slider = document.getElementById('phase2');
+  const phase2Val = document.getElementById('phase2Val');
+
+  const presetPiBtn = document.getElementById('presetPi');
+
+  function yToCanvas(y) {
+    return height - ((y - yMin) / (yMax - yMin)) * height;
+  }
+
+  function drawZeroLine(ctx) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    const zeroY = yToCanvas(0);
+    ctx.moveTo(0, zeroY);
+    ctx.lineTo(width, zeroY);
+    ctx.stroke();
+  }
+
+  function drawSine(ctx, amplitude, frequency, phase, offset, color) {
+    ctx.clearRect(0, 0, width, height);
+    drawZeroLine(ctx);
+
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.sin(2 * Math.PI * frequency * normX + phase) + offset;
+      const canvasY = yToCanvas(y);
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawSum(amplitude1, frequency1, phase1, offset1,
+                   amplitude2, frequency2, phase2, offset2) {
+    ctxSum.clearRect(0, 0, width, height);
+    drawZeroLine(ctxSum);
+
+    ctxSum.beginPath();
+    ctxSum.lineWidth = 2;
+    ctxSum.strokeStyle = '#cc5500';
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+
+      const y1 = amplitude1 * Math.sin(2 * Math.PI * frequency1 * normX + phase1) + offset1;
+      const y2 = amplitude2 * Math.sin(2 * Math.PI * frequency2 * normX + phase2) + offset2;
+      const y = y1 + y2;
+      const canvasY = yToCanvas(y);
+
+      if (px === 0) {
+        ctxSum.moveTo(px, canvasY);
+      } else {
+        ctxSum.lineTo(px, canvasY);
+      }
+    }
+    ctxSum.stroke();
+  }
+
+  function update() {
+    const amplitude1 = 1;
+    const frequency1 = 2;
+    const phase1 = 0;
+    const offset1 = 0;
+
+    const amplitude2 = 1;
+    const frequency2 = 2;
+    const phase2 = parseFloat(phase2Slider.value);
+    const offset2 = 0;
+
+    phase2Val.textContent = phase2.toFixed(2);
+
+    drawSine(ctx1, amplitude1, frequency1, phase1, offset1, '#0077cc');
+    drawSine(ctx2, amplitude2, frequency2, phase2, offset2, '#009900');
+    drawSum(amplitude1, frequency1, phase1, offset1,
+            amplitude2, frequency2, phase2, offset2);
+  }
+
+  update();
+
+  phase2Slider.addEventListener('input', update);
+
+  presetPiBtn.addEventListener('click', () => {
+    phase2Slider.value = Math.PI;
+    update();
+  });
+</script>
+
+</body>
+</html>
+

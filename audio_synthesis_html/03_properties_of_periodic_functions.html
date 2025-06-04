@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sine Wave Controller with fixed Y range</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  canvas {
+    border: 1px solid #ccc;
+    display: block;
+    margin-bottom: 20px;
+  }
+  .slider-container {
+    margin-bottom: 15px;
+  }
+  label {
+    display: inline-block;
+    width: 80px;
+  }
+  input[type=range] {
+    width: 300px;
+    vertical-align: middle;
+  }
+  .value {
+    display: none;
+    width: 50px;
+    text-align: right;
+    margin-left: 10px;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sineCanvas" width="600" height="200"></canvas>
+
+<div class="slider-container">
+  <label for="amplitude">Amplitude</label>
+  <input type="range" id="amplitude" min="0" max="2" step="0.01" value="1" />
+  <span class="value" id="ampVal">1.00</span>
+</div>
+
+<div class="slider-container">
+  <label for="frequency">Frequency</label>
+  <input type="range" id="frequency" min="1" max="10" step="0.1" value="5" />
+  <span class="value" id="freqVal">5.0</span>
+</div>
+
+<div class="slider-container">
+  <label for="phase">Phase</label>
+  <input type="range" id="phase" min="0" max="6.28319" step="0.01" value="0" />
+  <span class="value" id="phaseVal">0.00</span>
+</div>
+
+<div class="slider-container">
+  <label for="offset">Offset</label>
+  <input type="range" id="offset" min="0" max="1" step="0.01" value="0" />
+  <span class="value" id="offsetVal">0.00</span>
+</div>
+
+<script>
+  const canvas = document.getElementById('sineCanvas');
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // We fix y-axis limits to -2 to 2
+  const yMin = -2;
+  const yMax = 2;
+
+  // Sliders
+  const ampSlider = document.getElementById('amplitude');
+  const freqSlider = document.getElementById('frequency');
+  const phaseSlider = document.getElementById('phase');
+  const offsetSlider = document.getElementById('offset');
+
+  const ampVal = document.getElementById('ampVal');
+  const freqVal = document.getElementById('freqVal');
+  const phaseVal = document.getElementById('phaseVal');
+  const offsetVal = document.getElementById('offsetVal');
+
+  // x axis limits
+  const xMin = -2;
+  const xMax = 2;
+
+  // Converts a y value in yMin..yMax range to canvas pixel Y (inverted because canvas y=0 is top)
+  function yToCanvas(y) {
+    // Normalize y from [yMin,yMax] to [height,0]
+    return height - ((y - yMin) / (yMax - yMin)) * height;
+  }
+
+  function drawSine(amplitude, frequency, phase, offset) {
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw zero line (y=0)
+    ctx.beginPath();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    const zeroY = yToCanvas(0);
+    ctx.moveTo(0, zeroY);
+    ctx.lineTo(width, zeroY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#0077cc';
+
+    for (let px = 0; px <= width; px++) {
+      // Map px to x in range [-2, 2]
+      const x = xMin + (px / width) * (xMax - xMin);
+
+      // Calculate sine wave y value with offset
+      // frequency = periods in [-2,2]
+      // normX from 0 to 1 for sine calculation
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.sin(2 * Math.PI * frequency * normX + phase) + offset;
+
+      const canvasY = yToCanvas(y);
+
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function update() {
+    const amplitude = parseFloat(ampSlider.value);
+    const frequency = parseFloat(freqSlider.value);
+    const phase = parseFloat(phaseSlider.value);
+    const offset = parseFloat(offsetSlider.value);
+
+    ampVal.textContent = amplitude.toFixed(2);
+    freqVal.textContent = frequency.toFixed(1);
+    phaseVal.textContent = phase.toFixed(2);
+    offsetVal.textContent = offset.toFixed(2);
+
+    drawSine(amplitude, frequency, phase, offset);
+  }
+
+  update();
+
+  ampSlider.addEventListener('input', update);
+  freqSlider.addEventListener('input', update);
+  phaseSlider.addEventListener('input', update);
+  offsetSlider.addEventListener('input', update);
+</script>
+
+</body>
+</html>
+

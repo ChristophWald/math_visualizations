@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sine and Cosine with Amplitude and Phase Controls</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      position: relative;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      margin-left: 20px;
+    }
+
+    label {
+      margin-bottom: 10px;
+    }
+
+    input[type=range] {
+      width: 200px;
+    }
+
+    .value {
+      display: none;
+    }
+
+    .operator {
+      font-size: 64px;
+      font-weight: bold;
+      pointer-events: none;
+      color: #333;
+      margin-left: 300px;
+      user-select: none;
+      align-self: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sine canvas and slider -->
+<div class="row">
+  <canvas id="sineCanvas" width="600" height="200"></canvas>
+  <div class="slider-container">
+    <label for="ampSine">Amplitude</label>
+    <input type="range" id="ampSine" min="-1" max="1" step="0.01" value="1" />
+    <span class="value" id="ampSineVal">1.00</span>
+  </div>
+</div>
+
+<!-- + symbol row -->
+<div class="row" style="height: 80px;">
+  <div class="operator">+</div>
+</div>
+
+<!-- Cosine canvas and slider -->
+<div class="row">
+  <canvas id="cosineCanvas" width="600" height="200"></canvas>
+  <div class="slider-container">
+    <label for="ampCosine">Amplitude</label>
+    <input type="range" id="ampCosine" min="-1" max="1" step="0.01" value="0" />
+    <span class="value" id="ampCosineVal">0.00</span>
+  </div>
+</div>
+
+<!-- = symbol row -->
+<div class="row" style="height: 80px;">
+  <div class="operator">=</div>
+</div>
+
+<!-- Sum canvas and phase slider -->
+<div class="row">
+  <canvas id="sumCanvas" width="600" height="200"></canvas>
+  <div class="slider-container">
+    <label for="phaseSlider">Phase</label>
+    <input type="range" id="phaseSlider" min="0" max="6.28319" step="0.01" value="0" />
+    <span class="value" id="phaseVal">0.00</span>
+  </div>
+</div>
+
+<script>
+  const sineCanvas = document.getElementById('sineCanvas');
+  const sineCtx = sineCanvas.getContext('2d');
+  const cosineCanvas = document.getElementById('cosineCanvas');
+  const cosineCtx = cosineCanvas.getContext('2d');
+  const sumCanvas = document.getElementById('sumCanvas');
+  const sumCtx = sumCanvas.getContext('2d');
+
+  const width = sineCanvas.width;
+  const height = sineCanvas.height;
+
+  const yMin = -2;
+  const yMax = 2;
+  const xMin = -2;
+  const xMax = 2;
+
+  const ampSineSlider = document.getElementById('ampSine');
+  const ampSineVal = document.getElementById('ampSineVal');
+  const ampCosineSlider = document.getElementById('ampCosine');
+  const ampCosineVal = document.getElementById('ampCosineVal');
+  const phaseSlider = document.getElementById('phaseSlider');
+  const phaseVal = document.getElementById('phaseVal');
+
+  function yToCanvas(y) {
+    return height - ((y - yMin) / (yMax - yMin)) * height;
+  }
+
+  function drawZeroLine(ctx) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    const zeroY = yToCanvas(0);
+    ctx.moveTo(0, zeroY);
+    ctx.lineTo(width, zeroY);
+    ctx.stroke();
+  }
+
+  function drawSine(ctx, amplitude, frequency, phase, offset, color) {
+    ctx.clearRect(0, 0, width, height);
+    drawZeroLine(ctx);
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.sin(2 * Math.PI * frequency * normX + phase) + offset;
+      const canvasY = yToCanvas(y);
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawCosine(ctx, amplitude, frequency, phase, offset, color) {
+    ctx.clearRect(0, 0, width, height);
+    drawZeroLine(ctx);
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.cos(2 * Math.PI * frequency * normX + phase) + offset;
+      const canvasY = yToCanvas(y);
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawSum(amplitude1, frequency1, phase1, offset1,
+                   amplitude2, frequency2, phase2, offset2) {
+    sumCtx.clearRect(0, 0, width, height);
+    drawZeroLine(sumCtx);
+    sumCtx.beginPath();
+    sumCtx.lineWidth = 2;
+    sumCtx.strokeStyle = '#cc5500';
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+
+      const y1 = amplitude1 * Math.sin(2 * Math.PI * frequency1 * normX + phase1) + offset1;
+      const y2 = amplitude2 * Math.cos(2 * Math.PI * frequency2 * normX + phase2) + offset2;
+      const y = y1 + y2;
+      const canvasY = yToCanvas(y);
+
+      if (px === 0) {
+        sumCtx.moveTo(px, canvasY);
+      } else {
+        sumCtx.lineTo(px, canvasY);
+      }
+    }
+    sumCtx.stroke();
+  }
+
+  let updatingFromPhase = false;
+  let updatingFromAmplitude = false;
+
+  function updateFromPhase() {
+    if (updatingFromAmplitude) return;
+    updatingFromPhase = true;
+
+    const phase = parseFloat(phaseSlider.value);
+
+    const A = Math.cos(phase);
+    const B = Math.sin(phase);
+
+    ampSineSlider.value = A.toFixed(2);
+    ampCosineSlider.value = B.toFixed(2);
+    ampSineVal.textContent = A.toFixed(2);
+    ampCosineVal.textContent = B.toFixed(2);
+
+    drawAll(A, B, phase);
+
+    updatingFromPhase = false;
+  }
+
+  function updateFromAmplitude() {
+    if (updatingFromPhase) return;
+    updatingFromAmplitude = true;
+
+    const A = parseFloat(ampSineSlider.value);
+    const B = parseFloat(ampCosineSlider.value);
+
+    const phase = Math.atan2(B, A);
+
+    phaseSlider.value = phase.toFixed(2);
+    phaseVal.textContent = phase.toFixed(2);
+
+    drawAll(A, B, phase);
+
+    updatingFromAmplitude = false;
+  }
+
+  function drawAll(A, B, phase) {
+    const frequency = 2;
+    const offset = 0;
+
+    drawSine(sineCtx, A, frequency, 0, offset, '#0077cc');
+    drawCosine(cosineCtx, B, frequency, 0, offset, '#009900');
+    drawSum(A, frequency, 0, offset, B, frequency, 0, offset);
+  }
+
+  updateFromPhase();
+
+  phaseSlider.addEventListener('input', updateFromPhase);
+  ampSineSlider.addEventListener('input', updateFromAmplitude);
+  ampCosineSlider.addEventListener('input', updateFromAmplitude);
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dual Cosines with Frequency and Amplitude Control</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+
+  canvas {
+    border: 1px solid #ccc;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  /* Rows with canvas + slider or just canvas */
+  .canvas-slider-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  /* Container for the + and = operators */
+  .operator-row {
+    display: flex;
+    height: 80px;
+    align-items: center;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  /* Operator styling and horizontal shift */
+  .operator {
+    font-size: 64px;
+    font-weight: bold;
+    color: #333;
+    pointer-events: none;
+    user-select: none;
+    margin-left: 300px; /* shift horizontally by half canvas width */
+  }
+
+  /* Slider container stacked vertically, centered vertically relative to canvas */
+  .slider-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 20px;
+    padding-top: 50px; 
+  }
+
+  /* Each slider + label + value row */
+  .slider-row {
+    margin-bottom: 15px;
+  }
+
+  label {
+    display: inline-block;
+    width: 80px;
+    margin-right: 5px;
+  }
+
+  input[type=range] {
+    width: 200px;
+    vertical-align: middle;
+  }
+
+  .value {
+    display: none;
+    width: 50px;
+    text-align: right;
+    margin-left: 10px;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- First cosine wave canvas -->
+<canvas id="cosineCanvas1" width="600" height="200"></canvas>
+
+<!-- Plus operator row -->
+<div class="operator-row">
+  <div class="operator">+</div>
+</div>
+
+<!-- Second cosine wave canvas with sliders -->
+<div class="canvas-slider-row">
+  <canvas id="cosineCanvas2" width="600" height="200"></canvas>
+
+  <div class="slider-container">
+    <div class="slider-row">
+      <label for="freq2">Frequency</label>
+      <input type="range" id="freq2" min="0" max="1" step="0.01" value="1" />
+      <span class="value" id="freq2Val">1.00</span>
+    </div>
+    <div class="slider-row">
+      <label for="amp2">Amplitude</label>
+      <input type="range" id="amp2" min="0" max="1" step="0.01" value="1" />
+      <span class="value" id="amp2Val">1.00</span>
+    </div>
+  </div>
+</div>
+
+<!-- Equals operator row -->
+<div class="operator-row">
+  <div class="operator">=</div>
+</div>
+
+<!-- Sum canvas -->
+<canvas id="cosineCanvasSum" width="600" height="200"></canvas>
+
+<script>
+  const canvas1 = document.getElementById('cosineCanvas1');
+  const ctx1 = canvas1.getContext('2d');
+  const canvas2 = document.getElementById('cosineCanvas2');
+  const ctx2 = canvas2.getContext('2d');
+  const canvasSum = document.getElementById('cosineCanvasSum');
+  const ctxSum = canvasSum.getContext('2d');
+  const width = canvas1.width;
+  const height = canvas1.height;
+
+  const yMin = -2;
+  const yMax = 2;
+  const xMin = -2;
+  const xMax = 2;
+
+  const freq2Slider = document.getElementById('freq2');
+  const freq2Val = document.getElementById('freq2Val');
+  const amp2Slider = document.getElementById('amp2');
+  const amp2Val = document.getElementById('amp2Val');
+
+  function yToCanvas(y) {
+    return height - ((y - yMin) / (yMax - yMin)) * height;
+  }
+
+  function drawZeroLine(ctx) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    const zeroY = yToCanvas(0);
+    ctx.moveTo(0, zeroY);
+    ctx.lineTo(width, zeroY);
+    ctx.stroke();
+  }
+
+  function drawCosine(ctx, amplitude, frequency, phase, offset, color) {
+    ctx.clearRect(0, 0, width, height);
+    drawZeroLine(ctx);
+
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.cos(2 * Math.PI * frequency * normX + phase) + offset;
+      const canvasY = yToCanvas(y);
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawSum(amplitude1, frequency1, phase1, offset1,
+                   amplitude2, frequency2, phase2, offset2) {
+    ctxSum.clearRect(0, 0, width, height);
+    drawZeroLine(ctxSum);
+
+    ctxSum.beginPath();
+    ctxSum.lineWidth = 2;
+    ctxSum.strokeStyle = '#cc5500';
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+
+      const y1 = amplitude1 * Math.cos(2 * Math.PI * frequency1 * normX + phase1) + offset1;
+      const y2 = amplitude2 * Math.cos(2 * Math.PI * frequency2 * normX + phase2) + offset2;
+      const y = y1 + y2;
+      const canvasY = yToCanvas(y);
+
+      if (px === 0) {
+        ctxSum.moveTo(px, canvasY);
+      } else {
+        ctxSum.lineTo(px, canvasY);
+      }
+    }
+    ctxSum.stroke();
+  }
+
+  function update() {
+    const amplitude1 = 1;
+    const frequency1 = 2; // fixed frequency for first cosine
+    const phase1 = 0;
+    const offset1 = 0;
+
+    const amplitude2 = parseFloat(amp2Slider.value);
+    const frequency2 = parseFloat(freq2Slider.value);
+    const phase2 = 0;
+    const offset2 = 0;
+
+    freq2Val.textContent = frequency2.toFixed(2);
+    amp2Val.textContent = amplitude2.toFixed(2);
+
+    drawCosine(ctx1, amplitude1, frequency1, phase1, offset1, '#0077cc');
+    drawCosine(ctx2, amplitude2, frequency2, phase2, offset2, '#009900');
+    drawSum(amplitude1, frequency1, phase1, offset1,
+            amplitude2, frequency2, phase2, offset2);
+  }
+
+  update();
+
+  freq2Slider.addEventListener('input', update);
+  amp2Slider.addEventListener('input', update);
+</script>
+
+</body>
+</html>
+

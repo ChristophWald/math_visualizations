@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product of Two Sine Waves with Offset Control</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    position: relative;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Left align */
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  canvas {
+    border: 1px solid #ccc;
+    display: block;
+  }
+
+  .slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Vertically center */
+    height: 200px; /* Same as canvas */
+    margin-left: 20px;
+  }
+
+  label {
+    margin-bottom: 10px;
+  }
+
+  input[type=range] {
+    width: 200px;
+  }
+
+  .value {
+    display: none;
+  }
+
+  .operator {
+    font-size: 64px;
+    font-weight: bold;
+    pointer-events: none;
+    color: #333;
+    margin-left: 300px;  /* this shifts it right */
+    user-select: none;
+    align-self: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- First sine wave canvas -->
+<div class="row">
+  <canvas id="sineCanvas1" width="600" height="200"></canvas>
+</div>
+
+<!-- Operator: × between first and second canvas -->
+<div class="row" style="height: 80px;"> <!-- Just to add vertical spacing -->
+  <div class="operator">×</div>
+</div>
+
+<!-- Second sine wave canvas and vertically-centered slider -->
+<div class="row">
+  <canvas id="sineCanvas2" width="600" height="200"></canvas>
+  <div class="slider-container">
+    <label for="offset2">Offset</label>
+    <input type="range" id="offset2" min="0" max="0.5" step="0.005" value="0" />
+    <span class="value" id="offset2Val">0.00</span>
+  </div>
+</div>
+
+<!-- Operator: = between second and third canvas -->
+<div class="row" style="height: 80px;">
+  <div class="operator">=</div>
+</div>
+
+<!-- Product canvas -->
+<div class="row">
+  <canvas id="sineCanvasProd" width="600" height="200"></canvas>
+</div>
+
+<script>
+  const canvas1 = document.getElementById('sineCanvas1');
+  const ctx1 = canvas1.getContext('2d');
+  const canvas2 = document.getElementById('sineCanvas2');
+  const ctx2 = canvas2.getContext('2d');
+  const canvasProd = document.getElementById('sineCanvasProd');
+  const ctxProd = canvasProd.getContext('2d');
+  const width = canvas1.width;
+  const height = canvas1.height;
+
+  const yMin = -1;
+  const yMax = 1;
+  const xMin = -2;
+  const xMax = 2;
+
+  const offset2Slider = document.getElementById('offset2');
+  const offset2Val = document.getElementById('offset2Val');
+
+  function yToCanvas(y) {
+    return height - ((y - yMin) / (yMax - yMin)) * height;
+  }
+
+  function drawZeroLine(ctx) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    const zeroY = yToCanvas(0);
+    ctx.moveTo(0, zeroY);
+    ctx.lineTo(width, zeroY);
+    ctx.stroke();
+  }
+
+  function drawSine(ctx, amplitude, frequency, offset, color) {
+    ctx.clearRect(0, 0, width, height);
+    drawZeroLine(ctx);
+
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+      const y = amplitude * Math.sin(2 * Math.PI * frequency * normX) + offset;
+      const canvasY = yToCanvas(y);
+      if (px === 0) {
+        ctx.moveTo(px, canvasY);
+      } else {
+        ctx.lineTo(px, canvasY);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawProduct(amp1, freq1, offset1,
+                       amp2, freq2, offset2) {
+    ctxProd.clearRect(0, 0, width, height);
+    drawZeroLine(ctxProd);
+
+    ctxProd.beginPath();
+    ctxProd.lineWidth = 2;
+    ctxProd.strokeStyle = '#cc5500';
+
+    for (let px = 0; px <= width; px++) {
+      const x = xMin + (px / width) * (xMax - xMin);
+      const normX = (x - xMin) / (xMax - xMin);
+
+      const y1 = amp1 * Math.sin(2 * Math.PI * freq1 * normX) + offset1;
+      const y2 = amp2 * Math.sin(2 * Math.PI * freq2 * normX) + offset2;
+      const y = y1 * y2;
+      const canvasY = yToCanvas(y);
+
+      if (px === 0) {
+        ctxProd.moveTo(px, canvasY);
+      } else {
+        ctxProd.lineTo(px, canvasY);
+      }
+    }
+    ctxProd.stroke();
+  }
+
+  function update() {
+    const amplitude1 = 0.5;
+    const frequency1 = 5;
+    const offset1 = 0;
+
+    const amplitude2 = 0.5;
+    const frequency2 = 2;
+    const offset2 = parseFloat(offset2Slider.value);
+
+    drawSine(ctx1, amplitude1, frequency1, offset1, '#0077cc');
+    drawSine(ctx2, amplitude2, frequency2, offset2, '#009900');
+    drawProduct(amplitude1, frequency1, offset1,
+                amplitude2, frequency2, offset2);
+  }
+
+  update();
+
+  offset2Slider.addEventListener('input', update);
+</script>
+
+</body>
+</html>
+
