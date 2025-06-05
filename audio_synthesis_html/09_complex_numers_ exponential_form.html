@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trigonometric and Exponential Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .canvas-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+
+    .formula {
+      margin-top: 10px;
+      font-family: monospace;
+      text-align: center;
+    }
+
+    .slider-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .slider-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    label {
+      width: 30px;
+    }
+
+    input[type=range] {
+      width: 300px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .button-container {
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .value-display {
+      margin-top: 6px;
+      font-family: monospace;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-row">
+  <!-- Left canvas block -->
+  <div class="canvas-block">
+    <canvas id="canvasLeft" width="400" height="400"></canvas>
+    <div class="formula">a<sup>iθ</sup></div> <!-- CHANGED -->
+    <div class="controls">
+      <div class="button-container">
+        <button onclick="setPresetE()">Preset a = e</button>
+      </div>
+      <div class="slider-inner">
+        <label for="aSlider">a:</label>
+        <input type="range" id="aSlider" min="2" max="3" step="0.01" value="2.5" />
+      </div>
+      <div class="value-display" id="aValueDisplay">a = 2.00</div>
+    </div>
+  </div>
+
+  <!-- Right canvas block -->
+  <div class="canvas-block">
+    <canvas id="canvasRight" width="400" height="400"></canvas>
+    <div class="formula">cos(θ) + i·sin(θ)</div> <!-- CHANGED -->
+  </div>
+</div>
+
+<!-- Shared θ slider -->
+<div class="slider-container">
+  <div class="slider-inner">
+    <label for="xSlider">θ:</label> <!-- CHANGED -->
+    <input type="range" id="xSlider" min="0" max="6.283" step="0.01" value="0" />
+  </div>
+  <div class="value-display" id="xValueDisplay">θ = 0.00</div> <!-- CHANGED -->
+</div>
+
+<script>
+  const canvasLeft = document.getElementById('canvasLeft');
+  const ctxLeft = canvasLeft.getContext('2d');
+  const canvasRight = document.getElementById('canvasRight');
+  const ctxRight = canvasRight.getContext('2d');
+
+  const aSlider = document.getElementById('aSlider');
+  const xSlider = document.getElementById('xSlider');
+
+  function setPresetE() {
+    aSlider.value = Math.E.toFixed(2);
+    update();
+  }
+
+  function drawComplexCurve(ctx, func, xMax, colorPoint = 'red', colorLine = 'blue') {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = 100;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw the path
+    ctx.beginPath();
+    for (let t = 0; t <= xMax; t += 0.01) {
+      const z = func(t);
+      const x = cx + z.re * scale;
+      const y = cy - z.im * scale;
+      if (t === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = colorLine;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Final point in red
+    const final = func(xMax);
+    const px = cx + final.re * scale;
+    const py = cy - final.im * scale;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = colorPoint;
+    ctx.fill();
+  }
+
+  function update() {
+    const a = parseFloat(aSlider.value);
+    const theta = parseFloat(xSlider.value); // variable still named xSlider
+
+    // Update value displays
+    document.getElementById('aValueDisplay').textContent = `a = ${a.toFixed(2)}`;
+    document.getElementById('xValueDisplay').textContent = `θ = ${theta.toFixed(2)}`; // CHANGED
+
+    // Left: a^(iθ)
+    drawComplexCurve(ctxLeft, t => {
+      const angle = t * Math.log(a);
+      return {
+        re: Math.cos(angle),
+        im: Math.sin(angle)
+      };
+    }, theta);
+
+    // Right: cos(θ) + i sin(θ)
+    drawComplexCurve(ctxRight, t => {
+      return {
+        re: Math.cos(t),
+        im: Math.sin(t)
+      };
+    }, theta);
+  }
+
+  aSlider.addEventListener('input', update);
+  xSlider.addEventListener('input', update);
+
+  update();
+</script>
+
+</body>
+</html>
+

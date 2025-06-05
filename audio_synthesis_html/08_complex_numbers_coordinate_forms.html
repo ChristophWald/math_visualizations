@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coordinate Forms for complex numbers</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      background: white;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto 2rem;
+      border: 1px solid #ddd;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .slider-row label {
+      flex: 1;
+    }
+
+    .slider-row input[type="range"] {
+      flex: 3;
+      margin: 0 1rem;
+    }
+
+    .slider-value {
+    	display: none;
+      width: 50px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="canvas" width="600" height="400"></canvas>
+
+    <div class="slider-row">
+      <label for="xSlider">X</label>
+      <input type="range" id="xSlider" min="-1" max="1" step="0.01" value="0">
+      <div id="xVal" class="slider-value">0</div>
+    </div>
+    <div class="slider-row">
+      <label for="ySlider">Y</label>
+      <input type="range" id="ySlider" min="-1" max="1" step="0.01" value="0">
+      <div id="yVal" class="slider-value">0</div>
+    </div>
+    <div class="slider-row">
+      <label for="radiusSlider">Angle</label>
+      <input type="range" id="radiusSlider" min="0" max="6.283" step="0.01" value="0">
+      <div id="radiusVal" class="slider-value">0</div>
+    </div>
+    <div class="slider-row">
+      <label for="magnitudeSlider">Magnitude</label>
+      <input type="range" id="magnitudeSlider" min="0" max="1.5" step="0.01" value="0">
+      <div id="magnitudeVal" class="slider-value">0</div>
+    </div>
+  </div>
+
+ <script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const scale = 150;
+
+  const xSlider = document.getElementById('xSlider');
+  const ySlider = document.getElementById('ySlider');
+  const radiusSlider = document.getElementById('radiusSlider');
+  const magnitudeSlider = document.getElementById('magnitudeSlider');
+
+  const xVal = document.getElementById('xVal');
+  const yVal = document.getElementById('yVal');
+  const radiusVal = document.getElementById('radiusVal');
+  const magnitudeVal = document.getElementById('magnitudeVal');
+
+  let mode = 'rect'; // or 'polar'
+
+  function draw(x, y) {
+    ctx.clearRect(0, 0, w, h);
+
+    // Axes
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, cy);
+    ctx.lineTo(w, cy);
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, h);
+    ctx.stroke();
+
+    // Unit circle
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'blue';
+    ctx.beginPath();
+    ctx.arc(cx, cy, scale, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+
+    // Components
+    ctx.strokeStyle = 'green';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - y * scale);
+    ctx.lineTo(cx + x * scale, cy - y * scale);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'blue';
+    ctx.beginPath();
+    ctx.moveTo(cx + x * scale, cy);
+    ctx.lineTo(cx + x * scale, cy - y * scale);
+    ctx.stroke();
+
+    // Red point
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(cx + x * scale, cy - y * scale, 5, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Orange vector (polar representation of same point)
+    ctx.strokeStyle = 'orange';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + x * scale, cy - y * scale);
+    ctx.stroke();
+  }
+
+  function updateFromXY() {
+    mode = 'rect';
+    const x = parseFloat(xSlider.value);
+    const y = parseFloat(ySlider.value);
+    const r = Math.sqrt(x * x + y * y);
+    const theta = Math.atan2(y, x);
+
+    radiusSlider.value = theta;
+    magnitudeSlider.value = r;
+
+    xVal.textContent = x.toFixed(2);
+    yVal.textContent = y.toFixed(2);
+    radiusVal.textContent = theta.toFixed(2);
+    magnitudeVal.textContent = r.toFixed(2);
+
+    draw(x, y);
+  }
+
+  function updateFromPolar() {
+    mode = 'polar';
+    const r = parseFloat(magnitudeSlider.value);
+    const theta = parseFloat(radiusSlider.value);
+    const x = r * Math.cos(theta);
+    const y = r * Math.sin(theta);
+
+    xSlider.value = x;
+    ySlider.value = y;
+
+    xVal.textContent = x.toFixed(2);
+    yVal.textContent = y.toFixed(2);
+    radiusVal.textContent = theta.toFixed(2);
+    magnitudeVal.textContent = r.toFixed(2);
+
+    draw(x, y);
+  }
+
+  xSlider.addEventListener('input', updateFromXY);
+  ySlider.addEventListener('input', updateFromXY);
+  radiusSlider.addEventListener('input', updateFromPolar);
+  magnitudeSlider.addEventListener('input', updateFromPolar);
+
+  // Initialize with cartesian point (0, 1)
+  // Set initial values
+xSlider.value = 1;
+ySlider.value = 0;
+radiusSlider.value = 0; // polar angle will be recalculated from (0,1)
+magnitudeSlider.value = 1;
+
+// Trigger sync and draw using Cartesian coordinates
+updateFromXY();
+</script>
+
+</body>
+</html>
