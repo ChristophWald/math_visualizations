@@ -68,8 +68,10 @@
     <button onclick="applyPreset('pulse')">Pulse</button>
   </div>
 
+  <div style="display: flex; align-items: flex-start;">
   <div id="sliders"></div>
-
+  <canvas id="spectrumCanvas" width="400" height="300" style="margin-left: 200px; border: 1px solid #ccc; background: white;"></canvas>
+</div>
   <script>
     const canvas = document.getElementById('sineCanvas');
     const ctx = canvas.getContext('2d');
@@ -136,6 +138,28 @@
       }
       return { minY, maxY };
     }
+    
+	const spectrumCanvas = document.getElementById('spectrumCanvas');
+	const spectrumCtx = spectrumCanvas.getContext('2d');
+
+	function drawSpectrum() {
+	  spectrumCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+	  const barWidth = spectrumCanvas.width / numSines;
+	  const maxAmp = Math.max(...amplitudes, 1); // Avoid div by 0
+
+	  for (let i = 0; i < numSines; i++) {
+	    const x = i * barWidth;
+	    const barHeight = (amplitudes[i] / maxAmp) * spectrumCanvas.height;
+
+	    spectrumCtx.fillStyle = '#0077cc';
+	    spectrumCtx.fillRect(x, spectrumCanvas.height - barHeight, barWidth - 2, barHeight);
+
+	    // Optional: frequency label
+	    spectrumCtx.fillStyle = '#444';
+	    spectrumCtx.font = '10px sans-serif';
+	    spectrumCtx.fillText(i + 1, x + barWidth / 4, spectrumCanvas.height - 4);
+	  }
+	}
 
     function drawSine() {
       const range = getYRange();
@@ -166,6 +190,7 @@
         }
       }
       ctx.stroke();
+      drawSpectrum();
     }
 
     function applyPreset(type) {
@@ -193,6 +218,7 @@
         document.getElementById(`val${i + 1}`).textContent = val.toFixed(2);
       }
       drawSine();
+      drawSpectrum();
     }
 
     drawSine();

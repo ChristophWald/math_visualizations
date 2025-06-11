@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multilplication of complex numbers</title>
+<style>
+  body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+  .vector-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .operator {
+    font-size: 2rem;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+  }
+  canvas { border: 1px solid #ccc; background: #fdfdfd; }
+  .canvas-with-slider { display: flex; flex-direction: column; align-items: center; }
+  label { margin-top: 4px; font-size: 0.9rem; }
+  .button-group {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    padding: 4px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Row 1 : angle sliders -->
+  <div class="vector-row">
+    <div class="canvas-with-slider">
+      <canvas id="canvas1" width="200" height="200"></canvas>
+      <input id="theta1" type="range" min="0" max="360" value="0">
+      <label for="theta1">θ₁ (°)</label>
+    </div>
+    <span class="operator">×</span>
+    <div class="canvas-with-slider">
+      <canvas id="canvas2" width="200" height="200"></canvas>
+      <input id="theta2" type="range" min="0" max="360" value="0">
+      <label for="theta2">θ₂ (°)</label>
+    </div>
+    <span class="operator">=</span>
+    <div class="canvas-with-slider">
+      <canvas id="canvas3" width="200" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 2 : frequency buttons -->
+  <div class="vector-row">
+    <div class="canvas-with-slider">
+      <canvas id="canvas4" width="200" height="200"></canvas>
+      <div class="button-group">
+        <button onclick="setF1(0)">f₁ = 0</button>
+        <button onclick="setF1(1)">f₁ = 1</button>
+      </div>
+    </div>
+    <span class="operator">×</span>
+    <div class="canvas-with-slider">
+      <canvas id="canvas5" width="200" height="200"></canvas>
+      <div class="button-group">
+        <button onclick="setF2(-1)">f₂ = -1</button>
+        <button onclick="setF2(0)">f₂ = 0</button>
+        <button onclick="setF2(1)">f₂ = 1</button>
+        <button onclick="setF2(2)">f₂ = 2</button>
+      </div>
+    </div>
+    <span class="operator">=</span>
+    <div class="canvas-with-slider">
+      <canvas id="canvas6" width="200" height="200"></canvas>
+    </div>
+  </div>
+
+<script>
+  /* ---------- shared drawing helpers ---------- */
+  const r = 80;
+  const cx = 100, cy = 100;
+
+  function drawUnit(ctx) {
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  function drawArrow(ctx, angleDeg) {
+    drawUnit(ctx);
+    const rad = angleDeg * Math.PI / 180;
+    const x = cx + r * Math.cos(rad);
+    const y = cy - r * Math.sin(rad);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = '#0065ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const ahLen = 10;
+    const ahAngle = 20 * Math.PI / 180;
+    const angle1 = rad + Math.PI - ahAngle;
+    const angle2 = rad + Math.PI + ahAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + ahLen * Math.cos(angle1), y - ahLen * Math.sin(angle1));
+    ctx.lineTo(x + ahLen * Math.cos(angle2), y - ahLen * Math.sin(angle2));
+    ctx.closePath();
+    ctx.fillStyle = '#0065ff';
+    ctx.fill();
+  }
+
+  /* ---------- Row-1 (static angle sliders) ---------- */
+  const ctx1 = canvas1.getContext('2d');
+  const ctx2 = canvas2.getContext('2d');
+  const ctx3 = canvas3.getContext('2d');
+
+  function updateStatic() {
+    const theta1 = +document.getElementById('theta1').value;
+    const theta2 = +document.getElementById('theta2').value;
+    drawArrow(ctx1, theta1);
+    drawArrow(ctx2, theta2);
+    drawArrow(ctx3, (theta1 + theta2) % 360);
+  }
+
+  document.getElementById('theta1').addEventListener('input', updateStatic);
+  document.getElementById('theta2').addEventListener('input', updateStatic);
+  updateStatic();
+
+  /* ---------- Row-2 (animated frequencies via buttons) ---------- */
+  const ctx4 = canvas4.getContext('2d');
+  const ctx5 = canvas5.getContext('2d');
+  const ctx6 = canvas6.getContext('2d');
+
+  let f1 = 1, f2 = 1;
+
+  function setF1(value) { f1 = value; }
+  function setF2(value) { f2 = value; }
+
+  function animate(timeMs) {
+    const t = timeMs / 1000;
+    const angle1 = (360 * f1 * t) % 360;
+    const angle2 = (360 * f2 * t) % 360;
+    const prodAngle = (angle1 + angle2) % 360;
+
+    drawArrow(ctx4, angle1);
+    drawArrow(ctx5, angle2);
+    drawArrow(ctx6, prodAngle);
+
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+</script>
+
+</body>
+</html>
+
