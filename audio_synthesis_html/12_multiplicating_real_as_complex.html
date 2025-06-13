@@ -1,111 +1,329 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rotating Vectors with Complex Multiplication</title>
+  <title>Rotating Vectors Control</title>
   <style>
     body {
+      font-family: sans-serif;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .layout {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .canvas-control {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
-      gap: 20px;
-      padding: 20px;
     }
+
+    .columns {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
     .row {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      gap: 12px;
     }
+
+    .op {
+      font-size: 2rem;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      width: 30px;
+    }
+
     canvas {
-      background: white;
+      width: 200px;
+      height: 200px;
+      background: #fdfdfd;
       border: 1px solid #ccc;
-      width: 150px;
-      height: 150px;
+    }
+
+    input[type="range"] {
+      width: 180px;
+      margin-top: 6px;
+    }
+
+    label {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="row" id="row1">
-    <canvas id="c1" width="150" height="150"></canvas>
-    <canvas id="c2" width="150" height="150"></canvas>
-    <canvas id="c3" width="150" height="150"></canvas>
-    <canvas id="c4" width="150" height="150"></canvas>
-  </div>
-  <div class="row" id="row2">
-    <canvas id="p1" width="150" height="150"></canvas>
-    <canvas id="p2" width="150" height="150"></canvas>
-    <canvas id="p3" width="150" height="150"></canvas>
-    <canvas id="p4" width="150" height="150"></canvas>
+
+<div class="layout">
+
+  <div class="canvas-control">
+    <canvas id="canvas1" width="200" height="200"></canvas>
+    <input id="freq1" type="range" min="0" max="1" step="0.01" value="0.5" />
   </div>
 
-  <script>
-    const radius = 60;
-    const center = 75;
+  <div class="op">×</div>
 
-    const firstRow = [
-      { el: document.getElementById("c1"), speed: 0.5, direction: 1 },
-      { el: document.getElementById("c2"), speed: 0.5, direction: -1 },
-      { el: document.getElementById("c3"), speed: 1, direction: 1 },
-      { el: document.getElementById("c4"), speed: 1, direction: -1 },
-    ];
+  <div class="canvas-control">
+    <canvas id="canvas2" width="200" height="200"></canvas>
+    <input id="freq2" type="range" min="0" max="1" step="0.01" value="1" />
+  </div>
 
-    const secondRow = [
-      { el: document.getElementById("p1"), pair: [0, 2] }, // 1 and 3
-      { el: document.getElementById("p2"), pair: [0, 3] }, // 1 and 4
-      { el: document.getElementById("p3"), pair: [1, 2] }, // 2 and 3
-      { el: document.getElementById("p4"), pair: [1, 3] }, // 2 and 4
-    ];
+  <div class="op">=</div>
 
-    function drawVector(ctx, angle, length=radius, color="black") {
-      ctx.clearRect(0, 0, 150, 150);
-      ctx.beginPath();
-      ctx.moveTo(center, center);
-      const x = center + length * Math.cos(angle);
-      const y = center + length * Math.sin(angle);
-      ctx.lineTo(x, y);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.stroke();
+  <div class="columns">
+    <div class="row">
+      <canvas width="200" height="200"></canvas>
+      <div class="op">×</div>
+      <canvas width="200" height="200"></canvas>
+      <div class="op">=</div>
+      <canvas width="200" height="200"></canvas>
+    </div>
+    <div class="row">
+      <canvas width="200" height="200"></canvas>
+      <div class="op">×</div>
+      <canvas width="200" height="200"></canvas>
+      <div class="op">=</div>
+      <canvas width="200" height="200"></canvas>
+    </div>
+    <div class="row">
+      <canvas width="200" height="200"></canvas>
+      <div class="op">×</div>
+      <canvas width="200" height="200"></canvas>
+      <div class="op">=</div>
+      <canvas width="200" height="200"></canvas>
+    </div>
+    <div class="row">
+      <canvas width="200" height="200"></canvas>
+      <div class="op">×</div>
+      <canvas width="200" height="200"></canvas>
+      <div class="op">=</div>
+      <canvas width="200" height="200"></canvas>
+    </div>
+  </div>
 
-      ctx.beginPath();
-      ctx.arc(center, center, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = "red";
-      ctx.fill();
+  <div class="op">=</div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <canvas id="rightCanvasTop" width="200" height="200" style="background:#fdfdfd; border:1px solid #ccc;"></canvas>
+    <canvas id="rightCanvasBottom" width="200" height="200" style="background:#fdfdfd; border:1px solid #ccc;"></canvas>
+  </div>
+</div>
+
+<script>
+const canvas1 = document.getElementById('canvas1');
+const ctx1 = canvas1.getContext('2d');
+const canvas2 = document.getElementById('canvas2');
+const ctx2 = canvas2.getContext('2d');
+
+const freqSlider1 = document.getElementById('freq1');
+const freqSlider2 = document.getElementById('freq2');
+
+const cx = 100, cy = 100, r = 80;
+
+const rightCanvasTop = document.getElementById('rightCanvasTop');
+const ctxRightTop = rightCanvasTop.getContext('2d');
+const rightCanvasBottom = document.getElementById('rightCanvasBottom');
+const ctxRightBottom = rightCanvasBottom.getContext('2d');
+
+const rows = 4;
+const cols = 3;
+
+const columnsDiv = document.querySelector('.columns');
+const rowDivs = Array.from(columnsDiv.querySelectorAll('.row'));
+const emptyCanvases = rowDivs.map(rowDiv =>
+  Array.from(rowDiv.querySelectorAll('canvas'))
+);
+
+function drawUnitCircle(ctx) {
+  ctx.clearRect(0, 0, 200, 200);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawArrow(ctx, angle, color) {
+  const x = cx + r * Math.cos(angle);
+  const y = cy - r * Math.sin(angle);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const ahLen = 10;
+  const ahAngle = 20 * Math.PI / 180;
+  const angle1 = angle + Math.PI - ahAngle;
+  const angle2 = angle + Math.PI + ahAngle;
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + ahLen * Math.cos(angle1), y - ahLen * Math.sin(angle1));
+  ctx.lineTo(x + ahLen * Math.cos(angle2), y - ahLen * Math.sin(angle2));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  return { x: Math.cos(angle), y: Math.sin(angle) };
+}
+
+function drawVector(ctx, vx, vy, color) {
+  const x = cx + r * vx;
+  const y = cy - r * vy;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const ahLen = 10;
+  const angle = Math.atan2(vy, vx);
+  const ahAngle = 20 * Math.PI / 180;
+  const angle1 = angle + Math.PI - ahAngle;
+  const angle2 = angle + Math.PI + ahAngle;
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + ahLen * Math.cos(angle1), y - ahLen * Math.sin(angle1));
+  ctx.lineTo(x + ahLen * Math.cos(angle2), y - ahLen * Math.sin(angle2));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawProductByPhase(ctx, angle1, angle2, color) {
+  const angleSum = angle1 + angle2;
+  const x = cx + r * Math.cos(angleSum);
+  const y = cy - r * Math.sin(angleSum);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const ahLen = 10;
+  const ahAngle = 20 * Math.PI / 180;
+  const angle1Head = angleSum + Math.PI - ahAngle;
+  const angle2Head = angleSum + Math.PI + ahAngle;
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + ahLen * Math.cos(angle1Head), y - ahLen * Math.sin(angle1Head));
+  ctx.lineTo(x + ahLen * Math.cos(angle2Head), y - ahLen * Math.sin(angle2Head));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function animate(time) {
+  const t = time / 1000;
+
+  const f1 = parseFloat(freqSlider1.value);
+  const f2 = parseFloat(freqSlider2.value);
+
+  const angleRed1 = 2 * Math.PI * f1 * t;
+  const angleBlue1 = -angleRed1;
+  const angleRed2 = 2 * Math.PI * f2 * t;
+  const angleBlue2 = -angleRed2;
+
+  drawUnitCircle(ctx1);
+  drawArrow(ctx1, angleRed1, '#ff3333');
+  drawArrow(ctx1, angleBlue1, '#0065ff');
+
+  drawUnitCircle(ctx2);
+  drawArrow(ctx2, angleRed2, '#ff3333');
+  drawArrow(ctx2, angleBlue2, '#0065ff');
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ctx = emptyCanvases[r][c].getContext('2d');
+      ctx.clearRect(0, 0, 200, 200);
+      drawUnitCircle(ctx);
     }
+  }
 
-    function animate() {
-      const now = performance.now() / 1000;
+  // Row 1: red × red → green (no change)
+  {
+    let ctx = emptyCanvases[0][0].getContext('2d');
+    drawArrow(ctx, angleRed1, '#ff3333');
+    ctx = emptyCanvases[0][1].getContext('2d');
+    drawArrow(ctx, angleRed2, '#ff3333');
+    ctx = emptyCanvases[0][2].getContext('2d');
+    drawProductByPhase(ctx, angleRed1, angleRed2, 'green');
+  }
 
-      // Calculate angles of first row vectors
-      const vectors = firstRow.map(({ speed, direction }) => {
-        const angle = direction * speed * 2 * Math.PI * now;
-        return angle;
-      });
+  // Row 2: blue × blue → orange (changed from green)
+  {
+    let ctx = emptyCanvases[1][0].getContext('2d');
+    drawArrow(ctx, angleBlue1, '#0065ff');
+    ctx = emptyCanvases[1][1].getContext('2d');
+    drawArrow(ctx, angleBlue2, '#0065ff');
+    ctx = emptyCanvases[1][2].getContext('2d');
+    drawProductByPhase(ctx, angleBlue1, angleBlue2, 'orange');
+  }
 
-      // Draw first row vectors in black
-      firstRow.forEach(({ el }, i) => {
-        const ctx = el.getContext("2d");
-        drawVector(ctx, vectors[i], radius, "black");
-      });
+  // Row 3: red × blue → green (changed from orange)
+  {
+    let ctx = emptyCanvases[2][0].getContext('2d');
+    drawArrow(ctx, angleRed1, '#ff3333');
+    ctx = emptyCanvases[2][1].getContext('2d');
+    drawArrow(ctx, angleBlue2, '#0065ff');
+    ctx = emptyCanvases[2][2].getContext('2d');
+    drawProductByPhase(ctx, angleRed1, angleBlue2, 'green');
+  }
 
-      // Draw second row vectors — product angles = sum of angles mod 2pi, in blue
-      secondRow.forEach(({ el, pair }) => {
-        const ctx = el.getContext("2d");
-        const angleSum = vectors[pair[0]] + vectors[pair[1]];
-        // Normalize angle between 0 and 2π
-        const angle = angleSum % (2 * Math.PI);
-        drawVector(ctx, angle, radius, "blue");
-      });
+  // Row 4: blue × red → orange (no change)
+  {
+    let ctx = emptyCanvases[3][0].getContext('2d');
+    drawArrow(ctx, angleBlue1, '#0065ff');
+    ctx = emptyCanvases[3][1].getContext('2d');
+    drawArrow(ctx, angleRed2, '#ff3333');
+    ctx = emptyCanvases[3][2].getContext('2d');
+    drawProductByPhase(ctx, angleBlue1, angleRed2, 'orange');
+  }
 
-      requestAnimationFrame(animate);
-    }
+ // Right canvas top: draw two separate vectors from row 1 and row 2 product vectors
+ctxRightTop.clearRect(0, 0, 200, 200);
+drawUnitCircle(ctxRightTop);
 
-    animate();
-  </script>
+const angleRow1Col3 = angleRed1 + angleRed2;  // green product vector
+const angleRow2Col3 = angleBlue1 + angleBlue2; // orange product vector
+
+drawVector(ctxRightTop, Math.cos(angleRow1Col3), Math.sin(angleRow1Col3), 'green');
+drawVector(ctxRightTop, Math.cos(angleRow2Col3), Math.sin(angleRow2Col3), 'orange');
+
+// Right canvas bottom: draw two separate vectors from row 3 and row 4 product vectors
+ctxRightBottom.clearRect(0, 0, 200, 200);
+drawUnitCircle(ctxRightBottom);
+
+const angleRow3Col3 = angleRed1 + angleBlue2;  // green product vector
+const angleRow4Col3 = angleBlue1 + angleRed2;  // orange product vector
+
+drawVector(ctxRightBottom, Math.cos(angleRow3Col3), Math.sin(angleRow3Col3), 'green');
+drawVector(ctxRightBottom, Math.cos(angleRow4Col3), Math.sin(angleRow4Col3), 'orange');
+
+
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+
 </body>
 </html>
 
