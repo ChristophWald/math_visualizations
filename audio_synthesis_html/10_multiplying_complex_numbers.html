@@ -33,52 +33,77 @@
 </head>
 <body>
 
-  <!-- Row 1 : angle sliders -->
-  <div class="vector-row">
-    <div class="canvas-with-slider">
-      <canvas id="canvas1" width="200" height="200"></canvas>
-      <input id="theta1" type="range" min="0" max="360" value="0">
-      <label for="theta1">θ₁ (°)</label>
-    </div>
-    <span class="operator">×</span>
-    <div class="canvas-with-slider">
-      <canvas id="canvas2" width="200" height="200"></canvas>
-      <input id="theta2" type="range" min="0" max="360" value="0">
-      <label for="theta2">θ₂ (°)</label>
-    </div>
-    <span class="operator">=</span>
-    <div class="canvas-with-slider">
-      <canvas id="canvas3" width="200" height="200"></canvas>
-    </div>
-  </div>
+<!-- ... [Keep everything before unchanged] -->
 
-  <!-- Row 2 : frequency buttons -->
-  <div class="vector-row">
-    <div class="canvas-with-slider">
-      <canvas id="canvas4" width="200" height="200"></canvas>
-      <div class="button-group">
-        <button onclick="setF1(0)">f₁ = 0</button>
-        <button onclick="setF1(1)">f₁ = 1</button>
-      </div>
-    </div>
-    <span class="operator">×</span>
-    <div class="canvas-with-slider">
-      <canvas id="canvas5" width="200" height="200"></canvas>
-      <div class="button-group">
-        <button onclick="setF2(-1)">f₂ = -1</button>
-        <button onclick="setF2(0)">f₂ = 0</button>
-        <button onclick="setF2(1)">f₂ = 1</button>
-        <button onclick="setF2(2)">f₂ = 2</button>
-      </div>
-    </div>
-    <span class="operator">=</span>
-    <div class="canvas-with-slider">
-      <canvas id="canvas6" width="200" height="200"></canvas>
+<!-- Row 1 : angle sliders (unchanged) -->
+<div class="vector-row">
+  <div class="canvas-with-slider">
+    <canvas id="canvas1" width="200" height="200"></canvas>
+    <input id="theta1" type="range" min="0" max="360" value="0">
+    <label for="theta1">θ₁ (°)</label>
+  </div>
+  <span class="operator">×</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvas2" width="200" height="200"></canvas>
+    <input id="theta2" type="range" min="0" max="360" value="0">
+    <label for="theta2">θ₂ (°)</label>
+  </div>
+  <span class="operator">=</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvas3" width="200" height="200"></canvas>
+  </div>
+</div>
+
+<!-- NEW Row (Inserted Row): amplitude × rotating -->
+<div class="vector-row">
+  <div class="canvas-with-slider">
+    <canvas id="canvasA1" width="200" height="200"></canvas>
+    <input id="thetaA" type="range" min="0" max="360" value="0">
+    <label for="thetaA">θ (°)</label>
+    <input id="ampA" type="range" min="0.5" max="1.2" step="0.01" value="1">
+    <label for="ampA">Amplitude</label>
+  </div>
+  <span class="operator">×</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvasA2" width="200" height="200"></canvas>
+    <div class="button-group">
+      <button onclick="setFA(0)">f = 0</button>
+      <button onclick="setFA(1)">f = 1</button>
     </div>
   </div>
+  <span class="operator">=</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvasA3" width="200" height="200"></canvas>
+  </div>
+</div>
+
+<!-- Row 2 : frequency buttons (unchanged) -->
+<div class="vector-row">
+  <div class="canvas-with-slider">
+    <canvas id="canvas4" width="200" height="200"></canvas>
+    <div class="button-group">
+      <button onclick="setF1(0)">f₁ = 0</button>
+      <button onclick="setF1(1)">f₁ = 1</button>
+    </div>
+  </div>
+  <span class="operator">×</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvas5" width="200" height="200"></canvas>
+    <div class="button-group">
+      <button onclick="setF2(-1)">f₂ = -1</button>
+      <button onclick="setF2(0)">f₂ = 0</button>
+      <button onclick="setF2(1)">f₂ = 1</button>
+      <button onclick="setF2(2)">f₂ = 2</button>
+    </div>
+  </div>
+  <span class="operator">=</span>
+  <div class="canvas-with-slider">
+    <canvas id="canvas6" width="200" height="200"></canvas>
+  </div>
+</div>
 
 <script>
-  /* ---------- shared drawing helpers ---------- */
+  // Shared constants
   const r = 80;
   const cx = 100, cy = 100;
 
@@ -91,11 +116,12 @@
     ctx.stroke();
   }
 
-  function drawArrow(ctx, angleDeg) {
+  function drawArrow(ctx, angleDeg, amplitude = 1) {
     drawUnit(ctx);
     const rad = angleDeg * Math.PI / 180;
-    const x = cx + r * Math.cos(rad);
-    const y = cy - r * Math.sin(rad);
+    const len = r * amplitude;
+    const x = cx + len * Math.cos(rad);
+    const y = cy - len * Math.sin(rad);
 
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -118,33 +144,57 @@
     ctx.fill();
   }
 
-  /* ---------- Row-1 (static angle sliders) ---------- */
+  // Row 1 static
   const ctx1 = canvas1.getContext('2d');
   const ctx2 = canvas2.getContext('2d');
   const ctx3 = canvas3.getContext('2d');
 
   function updateStatic() {
-    const theta1 = +document.getElementById('theta1').value;
-    const theta2 = +document.getElementById('theta2').value;
+    const theta1 = +theta1Input.value;
+    const theta2 = +theta2Input.value;
     drawArrow(ctx1, theta1);
     drawArrow(ctx2, theta2);
     drawArrow(ctx3, (theta1 + theta2) % 360);
   }
 
-  document.getElementById('theta1').addEventListener('input', updateStatic);
-  document.getElementById('theta2').addEventListener('input', updateStatic);
+  const theta1Input = document.getElementById('theta1');
+  const theta2Input = document.getElementById('theta2');
+  theta1Input.addEventListener('input', updateStatic);
+  theta2Input.addEventListener('input', updateStatic);
   updateStatic();
 
-  /* ---------- Row-2 (animated frequencies via buttons) ---------- */
+  // Row 2 animated
   const ctx4 = canvas4.getContext('2d');
   const ctx5 = canvas5.getContext('2d');
   const ctx6 = canvas6.getContext('2d');
-
   let f1 = 1, f2 = 1;
-
   function setF1(value) { f1 = value; }
   function setF2(value) { f2 = value; }
 
+  // NEW Middle Row
+  const ctxA1 = canvasA1.getContext('2d');
+  const ctxA2 = canvasA2.getContext('2d');
+  const ctxA3 = canvasA3.getContext('2d');
+  const thetaAInput = document.getElementById('thetaA');
+  const ampAInput = document.getElementById('ampA');
+  let fA = 1;
+  function setFA(value) { fA = value; }
+
+  function updateAmpRow(t) {
+    const theta = +thetaAInput.value;
+    const amp = +ampAInput.value;
+    const angle2 = (360 * fA * t) % 360;
+    const prodAngle = (theta + angle2) % 360;
+
+    drawArrow(ctxA1, theta, amp);
+    drawArrow(ctxA2, angle2);
+    drawArrow(ctxA3, prodAngle, amp);
+  }
+
+  thetaAInput.addEventListener('input', () => updateAmpRow(performance.now() / 1000));
+  ampAInput.addEventListener('input', () => updateAmpRow(performance.now() / 1000));
+
+  // Animation Loop
   function animate(timeMs) {
     const t = timeMs / 1000;
     const angle1 = (360 * f1 * t) % 360;
@@ -155,10 +205,13 @@
     drawArrow(ctx5, angle2);
     drawArrow(ctx6, prodAngle);
 
+    updateAmpRow(t);
     requestAnimationFrame(animate);
   }
+
   requestAnimationFrame(animate);
 </script>
+
 
 </body>
 </html>
